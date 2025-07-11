@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "936074086502",
+    "project_id": "business-card-scanner-ad68b",
+    "storage_bucket": "business-card-scanner-ad68b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:936074086502:android:57cdb664a75ae59f95c5a7",
+        "android_client_info": {
+          "package_name": "com.raghu.businesscardscanner"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "936074086502-2v3huf67n8rmmq7q2imj3h61hmphrj1a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.raghu.businesscardscanner",
+            "certificate_hash": "a1f65787c0c8f8d8fef291df45a1bab9db27d718"
+          }
+        },
+        {
+          "client_id": "936074086502-q7gu3kaq1s4eclmqf62jsup0clg4ujo2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOUEEIx2YXbWH2rFDvgKZy_qz4ATGpuOs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "936074086502-q7gu3kaq1s4eclmqf62jsup0clg4ujo2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

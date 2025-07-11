@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Business Card Scanner</string>
+    <string name="default_web_client_id">
+        936074086502-2v3huf67n8rmmq7q2imj3h61hmphrj1a.apps.googleusercontent.com
+    </string>
+</resources>
