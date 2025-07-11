@@ -36,14 +36,15 @@ A powerful Android app built with **Kotlin** and **Jetpack Compose** to scan bus
 
 | Scan Screen                                      | Reminder Screen                                   | Lead Scoring Screen                                |
 |--------------------------------------------------|--------------------------------------------------|----------------------------------------------------|
-| ![Scan Screen]("C:\Users\ADMIN\Pictures\Samsung Flow\BCST1.jpg")           | ![Reminder Screen]("C:\Users\ADMIN\Pictures\Samsung Flow\BCST2.jpg")       | ![Lead Scoring Screen]("C:\Users\ADMIN\Pictures\Samsung Flow\BCST3.jpg")     |
-
-> 👉 Place your screenshots inside a folder named **`screenshots`** in your repository root. Replace `bcst1.jpg`, `bcst2.jpg`, etc., with your actual file names.
+| ![Scan Screen]("[C:\Users\ADMIN\Pictures\Samsung Flow\BCST1.jpg](https://github.com/user-attachments/assets/fe61ac60-64f7-4cf6-a982-e05b93f18898)")           | ![Reminder Screen]("[C:\Users\ADMIN\Pictures\Samsung Flow\BCST2.jpg](https://github.com/user-attachments/assets/f8528c34-5842-4812-abff-0eec9d50a2c3)")       | ![Lead Scoring Screen]("[C:\Users\ADMIN\Pictures\Samsung Flow\BCST3.jpg](https://github.com/user-attachments/assets/9eebc029-2906-4854-a7e3-89172e0eeb8d)")     |
 
 ---
 
 ## 📦 Installation
 
-1. Clone the repository:
+1. Clone the repository:![BCST3](https://github.com/user-attachments/assets/9eebc029-2906-4854-a7e3-89172e0eeb8d)
+![BCST2](https://github.com/user-attachments/assets/f8528c34-5842-4812-abff-0eec9d50a2c3)
+![BCST1](https://github.com/user-attachments/assets/fe61ac60-64f7-4cf6-a982-e05b93f18898)
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/BusinessCardScannerApp.git
