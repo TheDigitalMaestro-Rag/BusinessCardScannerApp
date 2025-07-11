@@ -34,11 +34,11 @@ A powerful Android app built with **Kotlin** and **Jetpack Compose** to scan bus
 
 ## 📸 Screenshots
 
-_Add your screenshots here! Example:_
+| Scan Screen                                      | Reminder Screen                                   | Lead Scoring Screen                                |
+|--------------------------------------------------|--------------------------------------------------|----------------------------------------------------|
+| ![Scan Screen](screenshots/bcst1.jpg)           | ![Reminder Screen](screenshots/bcst2.jpg)       | ![Lead Scoring Screen](screenshots/bcst3.jpg)     |
 
-| Scan Screen | Reminder Screen | Lead Scoring |
-|-------------|-----------------|--------------|
-| ![Scan](screenshots/scan.png) | ![Reminder](screenshots/reminder.png) | ![Lead](screenshots/lead.png) |
+> 👉 Place your screenshots inside a folder named **`screenshots`** in your repository root. Replace `bcst1.jpg`, `bcst2.jpg`, etc., with your actual file names.
 
 ---
 
