@@ -36,7 +36,7 @@ A powerful Android app built with **Kotlin** and **Jetpack Compose** to scan bus
 
 | Scan Screen                                      | Reminder Screen                                   | Lead Scoring Screen                                |
 |--------------------------------------------------|--------------------------------------------------|----------------------------------------------------|
-| ![Scan Screen](screenshots/bcst1.jpg)           | ![Reminder Screen](screenshots/bcst2.jpg)       | ![Lead Scoring Screen](screenshots/bcst3.jpg)     |
+| ![Scan Screen]("C:\Users\ADMIN\Pictures\Samsung Flow\BCST1.jpg")           | ![Reminder Screen]("C:\Users\ADMIN\Pictures\Samsung Flow\BCST2.jpg")       | ![Lead Scoring Screen]("C:\Users\ADMIN\Pictures\Samsung Flow\BCST3.jpg")     |
 
 > 👉 Place your screenshots inside a folder named **`screenshots`** in your repository root. Replace `bcst1.jpg`, `bcst2.jpg`, etc., with your actual file names.
 
