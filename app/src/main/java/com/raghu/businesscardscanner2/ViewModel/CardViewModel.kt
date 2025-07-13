@@ -3,10 +3,13 @@ package com.raghu.businesscardscanner2.ViewModel
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
+import com.raghu.businesscardscanner2.AppUI.autoSaveToContacts
 import com.raghu.businesscardscanner2.RoomDB.DataBase.AppDatabase
 import com.raghu.businesscardscanner2.RoomDB.Entity.BusinessCard
 import com.raghu.businesscardscanner2.RoomDB.Entity.Folder
@@ -18,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -36,13 +40,12 @@ class BusinessCardViewModel(application: Application) : AndroidViewModel(applica
 
     init {
         val dao = AppDatabase.getDatabase(application).businessCardDao()
-        repository = BusinessCardRepository(dao) // ✅ Initialize first
+        repository = BusinessCardRepository(dao)
 
         allCards = repository.allCards
         allFolders = repository.allFolders
         favoriteCards = repository.favoriteCards
 
-        // ✅ Now safe to use repository in coroutine
         viewModelScope.launch {
             val folders = repository.allFolders.first()
             var folder = folders.find { it.name == "Favorites" }
@@ -58,7 +61,38 @@ class BusinessCardViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    enum class SortOption {
+        RECENTLY_ADDED, RECENTLY_VIEWED, NAME, COMPANY
+    }
+
+    // Sorting state
+    // Sorting state
+    private val _sortOption = MutableStateFlow(SortOption.RECENTLY_ADDED)
+    val sortOption: StateFlow<SortOption> = _sortOption.asStateFlow()
+
+    // Sorted cards flow that reacts to sort option changes
+    val sortedCards: Flow<List<BusinessCard>> = _sortOption.flatMapLatest { option ->
+        when (option) {
+            SortOption.RECENTLY_ADDED -> repository.allCardsByRecent
+            SortOption.RECENTLY_VIEWED -> repository.allCardsByLastViewed
+            SortOption.NAME -> repository.allCardsByName
+            SortOption.COMPANY -> repository.allCardsByCompany
+        }
+    }
+
+    // Function to change sort option
+    fun setSortOption(option: SortOption) {
+        _sortOption.value = option
+    }
+
+    // Function to update last viewed time
+    suspend fun updateLastViewed(cardId: Int) {
+        repository.updateLastViewed(cardId)
+    }
+
     fun insert(card: BusinessCard) = viewModelScope.launch {
+        val context = getApplication<Application>().applicationContext
+        autoSaveToContacts(context, card)
         repository.insert(card)
     }
 
@@ -191,5 +225,10 @@ class BusinessCardViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun updateLastViewedSafe(cardId: Int) {
+        viewModelScope.launch {
+            repository.updateLastViewed(cardId)
+        }
+    }
 
 }

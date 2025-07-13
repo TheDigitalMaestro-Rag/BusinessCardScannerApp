@@ -20,7 +20,8 @@ data class BusinessCard(
     val imagePath: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val isFavorite: Boolean = false,
-    val lastFollowUpDate: Long? = null
+    val lastFollowUpDate: Long? = null,
+    val lastViewedAt: Long = System.currentTimeMillis()
 )
 
 

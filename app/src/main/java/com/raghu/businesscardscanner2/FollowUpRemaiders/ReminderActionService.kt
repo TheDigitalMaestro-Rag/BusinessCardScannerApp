@@ -19,7 +19,13 @@ object ReminderActionService {
         CoroutineScope(Dispatchers.IO).launch {
             val db = AppDatabase.getDatabase(context)
             val reminder = db.followUpReminderDao().getReminderById(reminderId)
-            db.followUpReminderDao().updateReminder(reminder.copy(dueDate = System.currentTimeMillis() + snoozeMillis))
+            val newDueDate = System.currentTimeMillis() + snoozeMillis
+            db.followUpReminderDao().updateReminder(
+                reminder.copy(
+                    dueDate = newDueDate,
+                    snoozeCount = reminder.snoozeCount + 1
+                )
+            )
         }
     }
 }

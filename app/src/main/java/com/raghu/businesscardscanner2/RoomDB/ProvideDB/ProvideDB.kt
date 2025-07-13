@@ -13,6 +13,15 @@ import kotlinx.coroutines.flow.Flow
 class BusinessCardRepository(private val businessCardDao: BusinessCardDao) {
     val allCards: Flow<List<BusinessCard>> = businessCardDao.getAllCards()
 
+    val allCardsByRecent: Flow<List<BusinessCard>> = businessCardDao.getAllCardsByRecent()
+    val allCardsByLastViewed: Flow<List<BusinessCard>> = businessCardDao.getAllCardsByLastViewed()
+    val allCardsByName: Flow<List<BusinessCard>> = businessCardDao.getAllCardsByName()
+    val allCardsByCompany: Flow<List<BusinessCard>> = businessCardDao.getAllCardsByCompany()
+
+    suspend fun updateLastViewed(cardId: Int) {
+        businessCardDao.updateLastViewed(cardId)
+    }
+
     suspend fun insert(card: BusinessCard) {
         businessCardDao.insert(card)
     }

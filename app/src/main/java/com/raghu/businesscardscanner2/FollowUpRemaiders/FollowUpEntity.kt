@@ -8,17 +8,17 @@ import androidx.room.PrimaryKey
 data class FollowUpReminderEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val contactId: Long,
-    val contactName: String,
-    val message: String,
-    val dueDate: Long,
-    val repeatType: String = "None", // "None", "Daily", "Weekly", "Monthly"
-    val category: String = "General", // "General", "Call", "Email", "Meeting", "Task"
-    val snoozeCount: Int = 0,
-    val phoneNumber: String? = null,
-    val email: String? = null,
-    val companyName: String? = null,
-    val isCompleted: Boolean = false,
-    val notes: String? = null,
-    val tags: String? = null, // comma-separated tags
-    val notificationSoundUri: String? = null
+    var contactName: String,
+    var message: String,
+    var dueDate: Long,
+    var repeatType: String = "None", // "None", "Daily", "Weekly", "Monthly"
+    var category: String = "General", // "General", "Call", "Email", "Meeting", "Task"
+    var snoozeCount: Int = 0,
+    var phoneNumber: String? = null,
+    var email: String? = null,
+    var companyName: String? = null,
+    var isCompleted: Boolean = false,
+    var notes: String? = null,
+    var tags: String? = null, // comma-separated tags
+    var notificationSoundUri: String? = null
 )

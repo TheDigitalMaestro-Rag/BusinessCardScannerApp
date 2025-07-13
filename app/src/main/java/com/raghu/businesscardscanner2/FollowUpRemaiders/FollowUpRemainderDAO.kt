@@ -10,8 +10,10 @@ import kotlinx.coroutines.flow.Flow
 // --- DAO: FollowUpReminderDao.kt ---
 @Dao
 interface FollowUpReminderDao {
-    @Query("SELECT * FROM follow_up_reminders WHERE isCompleted = 0 ORDER BY dueDate ASC")
-    fun getPendingReminders(): Flow<List<FollowUpReminderEntity>>
+//    @Query("SELECT * FROM follow_up_reminders WHERE isCompleted = 0 ORDER BY dueDate ASC")
+//    fun getPendingReminders(): Flow<List<FollowUpReminderEntity>>
+@Query("SELECT * FROM follow_up_reminders WHERE isCompleted = 0 AND dueDate >= :currentTime ORDER BY dueDate ASC")
+fun getPendingReminders(currentTime: Long = System.currentTimeMillis()): Flow<List<FollowUpReminderEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReminder(reminder: FollowUpReminderEntity)

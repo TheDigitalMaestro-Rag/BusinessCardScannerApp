@@ -43,23 +43,29 @@ import java.util.Locale
 @Composable
 fun FollowUpReminderScreen(viewModel: FollowUpViewModel, reminderId: Int) {
     val context = LocalContext.current
+    val allReminders by viewModel.pendingReminders.collectAsState(initial = emptyList())
 
-    val reminder by viewModel.getReminderByIdFlow(reminderId).collectAsState(initial = null)
-
-    if (reminder == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Reminder not found")
-        }
-    } else {
-        Column(modifier = Modifier.padding(16.dp)) {
-            FollowUpReminderItem(
-                reminder = reminder!!,
-                onComplete = { viewModel.completeReminder(reminder!!.id) },
-                onSnooze = { viewModel.snoozeReminder(reminder!!.id, 10 * 60 * 1000) },
-                onAddToCalendar = { viewModel.addToGoogleCalendar(context, reminder!!) }
-            )
+    Column(modifier = Modifier.padding(16.dp)) {
+        if (allReminders.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No pending reminders")
+            }
+        } else {
+            LazyColumn {
+                items(allReminders) { reminder ->
+                    FollowUpReminderItem(
+                        reminder = reminder,
+                        onComplete = { viewModel.completeReminder(reminder.id) },
+                        onSnooze = { minutes ->
+                            viewModel.snoozeReminder(reminder.id, minutes * 60 * 1000)
+                        },
+                        onEdit = {updateRemider -> viewModel.updateReminder(updateRemider)},
+                        onAddToCalendar = { viewModel.addToGoogleCalendar(context, reminder) }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
         }
     }
 }
-
 

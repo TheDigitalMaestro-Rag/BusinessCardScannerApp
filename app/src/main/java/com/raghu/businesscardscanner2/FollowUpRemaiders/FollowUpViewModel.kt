@@ -14,19 +14,29 @@ class FollowUpViewModel(
     private val notificationHelper: NotificationHelper
 ) : ViewModel() {
 
-    val pendingReminders = repository.getPendingReminders().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    val pendingReminders = repository.getPendingReminders()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     fun addReminder(reminder: FollowUpReminderEntity) = viewModelScope.launch {
         repository.addReminder(reminder)
-        notificationHelper.scheduleNotification(reminder)
+        notificationHelper.scheduleFollowUpNotification(
+            cardId = reminder.id,
+            message = reminder.message,
+            triggerTime = reminder.dueDate,
+            repeatType = reminder.repeatType,
+            contactName = reminder.contactName,
+            companyName = reminder.companyName
+        )
     }
 
     fun updateReminder(reminder: FollowUpReminderEntity) = viewModelScope.launch {
         repository.updateReminder(reminder)
+        // Reschedule notification if due date changed
+        notificationHelper.cancelNotification(reminder.id)
         notificationHelper.scheduleNotification(reminder)
     }
 

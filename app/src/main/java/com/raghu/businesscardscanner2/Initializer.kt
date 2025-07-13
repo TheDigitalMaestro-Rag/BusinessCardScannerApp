@@ -1,26 +1,3 @@
-//package com.raghu.businesscardscanner2
-//
-//import android.app.Activity
-//import android.app.Application
-//import com.google.android.gms.ads.MobileAds
-//import com.raghu.businesscardscanner2.AdHelper.showAd
-//
-//class BusinessCardScannerApp : Application() {
-//    lateinit var adManager: AdManager
-//
-//    override fun onCreate() {
-//        super.onCreate()
-//
-//        AdHelper.init(this) // Initialize once globally
-//        // Initialize AdMob
-//        MobileAds.initialize(this) { initializationStatus ->
-//            // Optional: Check initialization status
-//        }
-//
-//        adManager = AdManager(this)
-//    }
-//}
-
 package com.raghu.businesscardscanner2
 
 import android.app.Activity
@@ -95,31 +72,21 @@ class BusinessCardScannerApp : Application() {
 
         applicationScope.launch {
             try {
-                // 2. Fix getPendingRemindersSync by either:
-                // Option A: Using Flow (recommended)
+                // Reschedule all pending reminders
                 followUpRepository.getPendingReminders().collect { pendingReminders ->
                     pendingReminders.forEach { reminder ->
                         notificationHelper.scheduleFollowUpNotification(
-                            reminder.id,
-                            reminder.message,
-                            reminder.dueDate
+                            cardId = reminder.id,
+                            message = reminder.message,
+                            triggerTime = reminder.dueDate,
+                            repeatType = reminder.repeatType,
+                            contactName = reminder.contactName,
+                            companyName = reminder.companyName,
+                            snoozeMinutes = 10 // Default value
                         )
                     }
                     Log.d("Reminders", "Rescheduled ${pendingReminders.size} pending reminders")
                 }
-
-                // OR Option B: Adding sync method to repository
-                /*
-                val pendingReminders = followUpRepository.getPendingRemindersSync()
-                pendingReminders.forEach { reminder ->
-                    notificationHelper.scheduleFollowUpNotification(
-                        reminder.id,
-                        reminder.message,
-                        reminder.dueDate
-                    )
-                }
-                Log.d("Reminders", "Rescheduled ${pendingReminders.size} pending reminders")
-                */
             } catch (e: Exception) {
                 Log.e("Reminders", "Failed to reschedule reminders", e)
             }

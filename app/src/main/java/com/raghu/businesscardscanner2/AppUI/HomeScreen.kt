@@ -114,9 +114,11 @@ import com.raghu.businesscardscanner2.AdHelper
 import com.raghu.businesscardscanner2.AdHelper.showAd
 import com.raghu.businesscardscanner2.BannerAdView
 import com.raghu.businesscardscanner2.BusinessCardScannerApp
+import com.raghu.businesscardscanner2.FollowUpRemaiders.EditReminderDialog
 import com.raghu.businesscardscanner2.FollowUpRemaiders.FollowUpReminderEntity
 import com.raghu.businesscardscanner2.FollowUpRemaiders.FollowUpReminderScreen
 import com.raghu.businesscardscanner2.FollowUpRemaiders.FollowUpViewModel
+import com.raghu.businesscardscanner2.FollowUpRemaiders.SnoozeData.SnoozeDialog
 import com.raghu.businesscardscanner2.MLkitTextRec.TextRecognizer
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -318,9 +320,10 @@ fun HomeScreen(
     selectedCardIds: List<Int>,
     onSelectedCardIdsChanged: (List<Int>) -> Unit
 ) {
-    val allCards by viewModel.allCards.collectAsState(initial = emptyList())
+    // Use sortedCards instead of allCards
+    val sortedCards by viewModel.sortedCards.collectAsState(initial = emptyList())
     val folders by viewModel.allFolders.collectAsState(initial = emptyList())
-
+    val currentSort by viewModel.sortOption.collectAsState()
 
     var searchQuery by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
@@ -329,16 +332,15 @@ fun HomeScreen(
     val context = LocalContext.current
     val activity = context.findActivity()
 
-
-    // Filter cards based on search
-    val cards = if (searchQuery.isNotBlank()) {
-        allCards.filter {
+    // Filter cards based on search - now using the sorted cards
+    val filteredCards = if (searchQuery.isNotBlank()) {
+        sortedCards.filter {
             it.name.contains(searchQuery, ignoreCase = true) ||
                     it.company.contains(searchQuery, ignoreCase = true) ||
                     it.email.contains(searchQuery, ignoreCase = true)
         }
     } else {
-        allCards
+        sortedCards
     }
 
     Scaffold(
@@ -348,11 +350,16 @@ fun HomeScreen(
                     containerColor = Color.White,
                 ),
                 title = {
-                    RoundedSearchBar(
-                        query = searchQuery,
-                        onQueryChanged = { searchQuery = it },
-                        onSearchClicked = { /* optional search trigger */ }
-                    )
+                        RoundedSearchBar(
+                            query = searchQuery,
+                            onQueryChanged = { searchQuery = it },
+                            onSearchClicked = { /* optional search trigger */ }
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        SortFilterBar(
+                            currentSort = currentSort,
+                            onSortSelected = { viewModel.setSortOption(it) }
+                        )
                 }
             )
         },
@@ -368,7 +375,7 @@ fun HomeScreen(
                             activity?.let {
                                 ShowAd(it)
                             } ?: Log.e("AdHelper", "Activity is null, cannot show ad.")
-                                  },
+                        },
                         icon = { Icon(Icons.Default.Share, contentDescription = "Export") },
                         text = { Text("Export") }
                     )
@@ -377,7 +384,7 @@ fun HomeScreen(
                             activity?.let {
                                 ShowAd(it)
                             } ?: Log.e("AdHelper", "Activity is null, cannot show ad.")
-                                  },
+                        },
                         icon = { Icon(Icons.Default.Folder, contentDescription = "Add to folder") },
                         text = { Text("Add to Folder") }
                     )
@@ -388,7 +395,7 @@ fun HomeScreen(
                         activity?.let {
                             maybeShowAd(it)
                         } ?: Log.e("AdHelper", "Activity is null, cannot show ad.")
-                        },
+                    },
                     icon = { Icon(Icons.Default.Add, contentDescription = "Scan") },
                     text = { Text("Scan Card") }
                 )
@@ -448,7 +455,7 @@ fun HomeScreen(
             )
         }
 
-        if (cards.isEmpty()) {
+        if (filteredCards.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -465,13 +472,14 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(16.dp),
             ) {
-                items(cards) { card ->
+                items(filteredCards) { card ->
                     val isSelected = selectedCardIds.contains(card.id)
                     BusinessCardItem(
                         card = card,
                         isSelected = isSelected,
                         isFavorite = card.isFavorite,
                         onCardClick = {
+                            viewModel.updateLastViewedSafe(card.id)
                             if (selectedCardIds.isNotEmpty()) {
                                 onSelectedCardIdsChanged(
                                     if (isSelected) {
@@ -505,7 +513,6 @@ fun HomeScreen(
         }
     }
 }
-
 
 
 
@@ -565,126 +572,6 @@ fun RoundedSearchBar(
         }
     }
 }
-
-
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun FollowUpReminderDialog(
-//    contactName: String,
-//    onDismiss: () -> Unit,
-//    onConfirm: (String, Date, String, String) -> Unit
-//) {
-//    var message by remember { mutableStateOf("") }
-//    var selectedDate by remember { mutableStateOf(Date(System.currentTimeMillis() + 3 * 24 * 60 * 60 * 1000)) }
-//    var repeatType by remember { mutableStateOf("None") }
-//    var category by remember { mutableStateOf("General") }
-//
-//    val repeatOptions = listOf("None", "Daily", "Weekly", "Monthly")
-//    val categoryOptions = listOf("General", "Call", "Email", "Meeting", "Task")
-//
-//    AlertDialog(
-//        onDismissRequest = onDismiss,
-//        title = { Text("Add Reminder for $contactName") },
-//        text = {
-//            Column {
-//                OutlinedTextField(
-//                    value = message,
-//                    onValueChange = { message = it },
-//                    label = { Text("Reminder Message") },
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(Modifier.height(16.dp))
-//
-//                val datePickerState = rememberDatePickerState(
-//                    initialSelectedDateMillis = selectedDate.time
-//                )
-//                DatePicker(state = datePickerState)
-//
-//                selectedDate = Date(datePickerState.selectedDateMillis ?: System.currentTimeMillis())
-//
-//                Spacer(Modifier.height(8.dp))
-//
-//                Text("Repeat Type")
-//                repeatOptions.forEach {
-//                    Row(verticalAlignment = Alignment.CenterVertically) {
-//                        RadioButton(selected = repeatType == it, onClick = { repeatType = it })
-//                        Text(it)
-//                    }
-//                }
-//
-//                Spacer(Modifier.height(8.dp))
-//
-//                Text("Category")
-//                categoryOptions.forEach {
-//                    Row(verticalAlignment = Alignment.CenterVertically) {
-//                        RadioButton(selected = category == it, onClick = { category = it })
-//                        Text(it)
-//                    }
-//                }
-//            }
-//        },
-//        confirmButton = {
-//            Button(
-//                onClick = {
-//                    onConfirm(message, selectedDate, repeatType, category)
-//                    onDismiss()
-//                },
-//                enabled = message.isNotBlank()
-//            ) {
-//                Text("Add")
-//            }
-//        },
-//        dismissButton = {
-//            TextButton(onClick = onDismiss) {
-//                Text("Cancel")
-//            }
-//        }
-//    )
-//}
-//
-//@Composable
-//fun FollowUpReminderItem(
-//    reminder: FollowUpReminderEntity,
-//    onComplete: () -> Unit
-//) {
-//    Card(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .padding(vertical = 4.dp),
-//        elevation = CardDefaults.cardElevation(4.dp)
-//    ) {
-//        Row(
-//            modifier = Modifier.padding(12.dp),
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            Column(modifier = Modifier.weight(1f)) {
-//                Text(
-//                    text = reminder.message,
-//                    style = MaterialTheme.typography.bodyLarge
-//                )
-//                Text(
-//                    text = "Due: ${SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(reminder.dueDate))}",
-//                    style = MaterialTheme.typography.bodySmall,
-//                    color = if (reminder.dueDate < System.currentTimeMillis()) Color.Red
-//                    else MaterialTheme.colorScheme.onSurfaceVariant
-//                )
-//            }
-//            IconButton(onClick = onComplete) {
-//                Icon(
-//                    imageVector = Icons.Default.Check,
-//                    contentDescription = "Mark Complete"
-//                )
-//            }
-//        }
-//    }
-//}
-
-//containerColor = when {
-//    isSelected -> MaterialTheme.colorScheme.secondaryContainer
-////                isFavorites -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-//    else -> MaterialTheme.colorScheme.surface
-//}
 
 // Updated Compose UI for FollowUpReminderDialog and FollowUpReminderItem
 
@@ -785,9 +672,34 @@ fun FollowUpReminderDialog(
 fun FollowUpReminderItem(
     reminder: FollowUpReminderEntity,
     onComplete: () -> Unit,
-    onSnooze: () -> Unit,
+    onSnooze: (minutes: Long) -> Unit,
+    onEdit: (FollowUpReminderEntity) -> Unit,
     onAddToCalendar: () -> Unit
 ) {
+    var showSnoozeDialog by remember { mutableStateOf(false) }
+
+    if (showSnoozeDialog) {
+        SnoozeDialog(
+            onDismiss = { showSnoozeDialog = false },
+            onSnoozeSelected = { minutes ->
+                onSnooze(minutes)
+            }
+        )
+    }
+
+    var showEditDialog by remember { mutableStateOf(false) }
+
+    if (showEditDialog) {
+        EditReminderDialog(
+            reminder = reminder,
+            onDismiss = { showEditDialog = false },
+            onSave = { updatedReminder ->
+                onEdit(updatedReminder)
+                showEditDialog = false
+            }
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -821,7 +733,10 @@ fun FollowUpReminderItem(
                 horizontalArrangement = Arrangement.End,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                TextButton(onClick = onSnooze) {
+                IconButton(onClick = { showEditDialog = true }) {
+                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                }
+                TextButton(onClick = { showSnoozeDialog = true }) {
                     Text("Snooze")
                 }
                 TextButton(onClick = onAddToCalendar) {
@@ -1294,6 +1209,12 @@ fun DetailsScreen(cardId: Int, navController: NavController, viewModel: Business
         }
     }
 
+    LaunchedEffect(Unit) {
+        if (!isEditing) {
+            viewModel.updateLastViewed(cardId)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -1433,6 +1354,12 @@ fun DetailsScreen(cardId: Int, navController: NavController, viewModel: Business
                     }
                 }
             )
+        }
+
+        LaunchedEffect(Unit) {
+            if (!isEditing) {
+                viewModel.updateLastViewed(cardId)
+            }
         }
 
         if (showExportMenu) {
@@ -1669,6 +1596,8 @@ fun DetailsScreen(cardId: Int, navController: NavController, viewModel: Business
                         }
                     }
 
+                    ContactActionRow(card?.company.toString())
+
                     Text(
                         text = card?.name ?: "",
                         style = MaterialTheme.typography.headlineMedium,
@@ -1751,12 +1680,9 @@ fun DetailsScreen(cardId: Int, navController: NavController, viewModel: Business
                     } else {
                         Column {
                             contactReminders.forEach { reminder ->
-//                                FollowUpReminderItem(
-//                                    reminder = reminder,
-//                                    onComplete = { followUpViewModel.completeReminder(reminder.id) }
-//                                )
                                 FollowUpReminderItem(
                                     reminder = reminder,
+                                    onEdit = { updateRemider -> followUpViewModel.updateReminder(updateRemider)  },
                                     onComplete = { followUpViewModel.completeReminder(reminder.id) },
                                     onSnooze = { followUpViewModel.snoozeReminder(reminder.id, 10 * 60 * 1000) },
                                     onAddToCalendar = { followUpViewModel.addToGoogleCalendar(context, reminder) }

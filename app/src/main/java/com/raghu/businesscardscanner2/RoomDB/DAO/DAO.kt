@@ -46,6 +46,22 @@ interface BusinessCardDao {
     @Query("SELECT * FROM folders ORDER BY name ASC")
     fun getAllFolders(): Flow<List<Folder>>
 
+
+    @Query("SELECT * FROM business_cards ORDER BY createdAt DESC")
+    fun getAllCardsByRecent(): Flow<List<BusinessCard>>
+
+    @Query("SELECT * FROM business_cards ORDER BY lastViewedAt DESC")
+    fun getAllCardsByLastViewed(): Flow<List<BusinessCard>>
+
+    @Query("SELECT * FROM business_cards ORDER BY name COLLATE NOCASE ASC")
+    fun getAllCardsByName(): Flow<List<BusinessCard>>
+
+    @Query("SELECT * FROM business_cards ORDER BY company COLLATE NOCASE ASC")
+    fun getAllCardsByCompany(): Flow<List<BusinessCard>>
+
+    @Query("UPDATE business_cards SET lastViewedAt = :timestamp WHERE id = :cardId")
+    suspend fun updateLastViewed(cardId: Int, timestamp: Long = System.currentTimeMillis())
+
     // Card-Folder relationship operations
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCardFolderCrossRef(crossRef: CardFolderCrossRef)
