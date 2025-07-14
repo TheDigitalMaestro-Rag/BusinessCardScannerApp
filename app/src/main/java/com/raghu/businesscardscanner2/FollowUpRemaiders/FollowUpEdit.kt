@@ -1,6 +1,10 @@
 package com.raghu.businesscardscanner2.FollowUpRemaiders
 
 import android.app.TimePickerDialog
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -43,6 +47,19 @@ fun EditReminderDialog(
         initialSelectedDateMillis = editedReminder.dueDate
     )
 
+
+    // Launcher for picking audio
+    val pickAudioLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Persist permission for the URI if needed (for long-term access)
+            val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            context.contentResolver.takePersistableUriPermission(it, takeFlags)
+            editedReminder = editedReminder.copy(notificationSoundUri = it.toString())
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Edit Reminder") },
@@ -63,6 +80,17 @@ fun EditReminderDialog(
                     label = { Text("Reminder Message") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                // Button to pick custom sound
+                Button(
+                    onClick = {
+                        pickAudioLauncher.launch("audio/*") // Mime type for audio files
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Select Custom Sound: ${editedReminder.notificationSoundUri?.substringAfterLast('/') ?: "Default"}")
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 

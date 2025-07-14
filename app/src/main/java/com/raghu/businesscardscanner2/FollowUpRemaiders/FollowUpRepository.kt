@@ -4,7 +4,9 @@ import kotlinx.coroutines.flow.Flow
 
 // --- Repository: FollowUpRepository.kt ---
 class FollowUpRepository(private val dao: FollowUpReminderDao) {
-    fun getPendingReminders() = dao.getPendingReminders()
+//    fun getPendingReminders() = dao.getPendingReminders()
+
+    fun getPendingReminders() = dao.getPendingReminders(System.currentTimeMillis())
 
     suspend fun addReminder(reminder: FollowUpReminderEntity) = dao.insertReminder(reminder)
 
@@ -13,12 +15,6 @@ class FollowUpRepository(private val dao: FollowUpReminderDao) {
     }
 
     suspend fun completeReminder(reminderId: Int) = dao.markReminderCompleted(reminderId)
-
-//    suspend fun snoozeReminder(reminderId: Int, snoozeMillis: Long) {
-//        val reminder = dao.getReminderById(reminderId)
-//        val newDueDate = System.currentTimeMillis() + snoozeMillis
-//        dao.updateReminder(reminder.copy(dueDate = newDueDate, snoozeCount = reminder.snoozeCount + 1))
-//    }
 
     suspend fun snoozeReminder(reminderId: Int, snoozeMillis: Long) {
         val reminder = dao.getReminderById(reminderId)

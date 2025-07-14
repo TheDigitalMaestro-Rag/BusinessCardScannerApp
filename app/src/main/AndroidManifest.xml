@@ -45,6 +45,15 @@
 
 
 
+
+    <!-- In your AndroidManifest.xml -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" /> <!-- If you use a foreground service for persistent alarms -->
+
+
+
+
     <application
         android:name="com.raghu.businesscardscanner2.BusinessCardScannerApp"
         android:allowBackup="true"
