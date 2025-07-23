@@ -66,15 +66,17 @@ object LeadScorer {
         }
     }
 
+    // In LeadScorer.kt
     private fun scoreIndustry(industry: String): Int {
-        return when (industry.lowercase()) {
+        return when (industry.lowercase().trim()) {
             "technology", "it", "software" -> 5
             "finance", "banking", "insurance" -> 4
             "healthcare", "medical" -> 4
             "education", "university" -> 3
             "manufacturing", "production" -> 3
             "retail", "ecommerce" -> 2
-            else -> 1
+            "" -> 0 // Handle empty industry
+            else -> 1 // Default for unknown industries
         }
     }
 
@@ -127,12 +129,14 @@ object LeadScorer {
     }
 
     // Categorize the lead based on score
+    // Update getLeadCategory to handle 0 score
     fun getLeadCategory(score: Int): String {
-        return when (score) {
-            in 80..100 -> "Hot Lead"
-            in 60..79 -> "Warm Lead"
-            in 40..59 -> "Cool Lead"
-            in 20..39 -> "Cold Lead"
+        return when {
+            score == 0 -> "Not Scored"
+            score >= 80 -> "Hot Lead"
+            score >= 60 -> "Warm Lead"
+            score >= 40 -> "Cool Lead"
+            score >= 20 -> "Cold Lead"
             else -> "Poor Lead"
         }
     }

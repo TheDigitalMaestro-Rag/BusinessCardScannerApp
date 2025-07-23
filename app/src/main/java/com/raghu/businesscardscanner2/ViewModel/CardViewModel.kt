@@ -94,11 +94,19 @@ class BusinessCardViewModel(application: Application) : AndroidViewModel(applica
     fun insert(card: BusinessCard) = viewModelScope.launch {
         val context = getApplication<Application>().applicationContext
         autoSaveToContacts(context, card)
+        // This will now automatically score the card before inserting
         repository.insert(card)
     }
 
+    // Modify update function to ensure scoring
     fun update(card: BusinessCard) = viewModelScope.launch {
+        // This will now automatically score the card before updating
         repository.update(card)
+    }
+
+    // Add this function to manually trigger scoring if needed
+    fun rescoreAllCards() = viewModelScope.launch {
+        repository.scoreAndUpdateAllLeads()
     }
 
     fun delete(card: BusinessCard) = viewModelScope.launch {

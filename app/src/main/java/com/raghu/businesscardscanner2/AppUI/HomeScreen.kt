@@ -1834,7 +1834,8 @@ fun BusinessCardApp(
     val navItems = listOf(
         NavItem("Home", Icons.Default.Home),
         NavItem("Folders", Icons.Default.FolderOpen),
-        NavItem("LeadScore", Icons.Default.Dashboard)
+        NavItem("LeadScore", Icons.Default.Dashboard),
+        NavItem("SearchBar", Icons.Default.Search)
     )
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -1844,7 +1845,7 @@ fun BusinessCardApp(
     var selectedCardIds by remember { mutableStateOf<List<Int>>(emptyList()) }
 
     // Define routes where drawer should be available
-    val drawerRoutes = setOf("Home", "Folders")
+    val drawerRoutes = setOf("Home", "Folders", "LeadScore", "SearchBar")
     val showDrawer = currentRoute in drawerRoutes
 
     // Content that will be shown inside or outside the drawer
@@ -1936,6 +1937,9 @@ fun BusinessCardApp(
                     composable("LeadScore") {
                         LeadScreen(context = LocalContext.current)
                     }
+                    composable("SearchBar") {
+                        SearchBarScreen(navController = navController)
+                    }
                 }
                 BannerAdView()
             }
@@ -1969,6 +1973,24 @@ fun BusinessCardApp(
         scaffoldContent()
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchBarScreen(
+    navController: NavController = rememberNavController(),
+    viewModel: BusinessCardViewModel = viewModel()
+) {
+    val sortedCards by viewModel.sortedCards.collectAsState(initial = emptyList())
+    val folders by viewModel.allFolders.collectAsState(initial = emptyList())
+    var selectedCardIds by remember { mutableStateOf<List<Int>>(emptyList()) }
+
+    CardListWithSearchScreen(
+        navController = navController,
+        cards = sortedCards,
+        selectedCardIds = selectedCardIds,
+    )
+}
+
 
 fun Context.findActivity(): Activity? {
     var context = this
@@ -2038,12 +2060,6 @@ fun HomeScreen(
                     containerColor = Color.White,
                 ),
                 title = {
-                    RoundedSearchBar(
-                        query = searchQuery,
-                        onQueryChanged = { searchQuery = it },
-                        onSearchClicked = { /* optional search trigger */ }
-                    )
-                    Spacer(Modifier.height(4.dp))
                     SortFilterBar(
                         currentSort = currentSort,
                         onSortSelected = { viewModel.setSortOption(it) }

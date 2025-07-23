@@ -15,24 +15,31 @@ import kotlinx.coroutines.flow.map
 
 
 class BusinessCardRepository(private val businessCardDao: BusinessCardDao) {
-    val allCards: Flow<List<BusinessCard>> = businessCardDao.getAllCards()
 
     val allCardsByRecent: Flow<List<BusinessCard>> = businessCardDao.getAllCardsByRecent()
     val allCardsByLastViewed: Flow<List<BusinessCard>> = businessCardDao.getAllCardsByLastViewed()
     val allCardsByName: Flow<List<BusinessCard>> = businessCardDao.getAllCardsByName()
     val allCardsByCompany: Flow<List<BusinessCard>> = businessCardDao.getAllCardsByCompany()
 
+    val allCards: Flow<List<BusinessCard>> = businessCardDao.getAllCards()
+        .map { cards -> cards.map { LeadScorer.scoreLead(it) } }
+
+    // Modify insert to auto-score:
+    suspend fun insert(card: BusinessCard) {
+        val scoredCard = LeadScorer.scoreLead(card)
+        businessCardDao.insert(scoredCard)
+    }
+
+    // Modify update to auto-score:
+    suspend fun update(card: BusinessCard) {
+        val scoredCard = LeadScorer.scoreLead(card)
+        businessCardDao.update(scoredCard)
+    }
+
     suspend fun updateLastViewed(cardId: Int) {
         businessCardDao.updateLastViewed(cardId)
     }
 
-    suspend fun insert(card: BusinessCard) {
-        businessCardDao.insert(card)
-    }
-
-    suspend fun update(card: BusinessCard) {
-        businessCardDao.update(card)
-    }
 
     suspend fun delete(card: BusinessCard) {
         businessCardDao.delete(card)
@@ -88,7 +95,6 @@ class BusinessCardRepository(private val businessCardDao: BusinessCardDao) {
         // Then delete the folder itself
         businessCardDao.deleteFolder(folder)
     }
-
 
     suspend fun deleteCardById(cardId: Int) {
         getCardById(cardId)?.let { delete(it) }
