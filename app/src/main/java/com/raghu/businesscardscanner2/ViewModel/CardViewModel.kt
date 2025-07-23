@@ -1,3 +1,4 @@
+// FileName: MultipleFiles/CardViewModel.kt
 package com.raghu.businesscardscanner2.ViewModel
 
 import android.app.Application
@@ -231,4 +232,20 @@ class BusinessCardViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    // New functions for reminder
+    fun setReminder(cardId: Int, reminderTime: Long, reminderMessage: String) = viewModelScope.launch {
+        val card = repository.getCardById(cardId)?.copy(
+            reminderTime = reminderTime,
+            reminderMessage = reminderMessage
+        )
+        card?.let { repository.update(it) }
+    }
+
+    fun clearReminder(cardId: Int) = viewModelScope.launch {
+        repository.clearReminder(cardId)
+    }
+
+    fun getCardsWithReminders(currentTime: Long): Flow<List<BusinessCard>> {
+        return repository.getCardsWithReminders(currentTime)
+    }
 }

@@ -1,3 +1,4 @@
+// FileName: MultipleFiles/MainActivity.kt
 package com.raghu.businesscardscanner
 
 import android.os.Bundle
@@ -10,28 +11,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.firebase.firestore.auth.User
-
-
-//class MainActivity : ComponentActivity() {
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//        super.onCreate(savedInstanceState)
-//        enableEdgeToEdge()
-//        setContent {
-//            BusinessCardScannerTheme {
-//                val viewModel: BusinessCardViewModel = viewModel()
-//                BusinessCardApp(viewModel)
-//            }
-//        }
-//    }
-//}
-
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -40,46 +19,49 @@ import com.google.android.gms.ads.MobileAds
 import com.google.firebase.auth.FirebaseAuth
 import com.raghu.businesscardscanner2.AdManager
 import com.raghu.businesscardscanner2.AppUI.BusinessCardApp
+import com.raghu.businesscardscanner2.AppUI.DetailsScreen
 import com.raghu.businesscardscanner2.BusinessCardScannerApp
-import com.raghu.businesscardscanner2.FollowUpRemaiders.FollowUpReminderScreen
-import com.raghu.businesscardscanner2.FollowUpRemaiders.FollowUpViewModel
 import com.raghu.businesscardscanner2.Login.RegistrationScreen
 import com.raghu.businesscardscanner2.ViewModel.BusinessCardViewModel
 import com.raghu.businesscardscanner2.ui.theme.BusinessCardScannerAppTheme
 import com.raghu.businesscardscanner2.ui.theme.BusinessCardScannerTheme
 import com.raghu.businesscardscanner2.ui.theme.SupabaseCourseTheme
+import com.raghu.businesscardscanner2.REMINDER_CARD_ID // Import the constant
 
 class MainActivity : ComponentActivity() {
     lateinit var adManager: AdManager
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // In your Application class or main activity
         MobileAds.initialize(this)
         adManager = AdManager(this)
 
-        val reminderIdFromIntent = intent?.getIntExtra("reminderId", -1) ?: -1
-        val destinationFromIntent = intent?.getStringExtra("destination")
+        // Handle intent from notification
+        val reminderCardId = intent.getIntExtra(REMINDER_CARD_ID, -1)
 
         setContent {
             SupabaseCourseTheme {
-                AppNavigation(
-                    reminderIdFromIntent = reminderIdFromIntent,
-                    destinationFromIntent = destinationFromIntent
-                )
+                AppNavigation(reminderCardId = reminderCardId)
             }
         }
     }
 }
 
 @Composable
-fun AppNavigation(reminderIdFromIntent: Int, destinationFromIntent: String?) {
+fun AppNavigation(reminderCardId: Int) {
     val navController = rememberNavController()
     val auth = FirebaseAuth.getInstance()
 
     val startDestination = if (auth.currentUser != null) "main" else "registration"
 
-    LaunchedEffect(Unit) {
-        if (destinationFromIntent == "reminders" && reminderIdFromIntent != -1) {
-            navController.navigate("reminders/$reminderIdFromIntent")
+    LaunchedEffect(reminderCardId) {
+        if (reminderCardId != -1) {
+            // Navigate to the details screen of the card that triggered the reminder
+            navController.navigate("details/$reminderCardId") {
+                // Clear back stack to prevent navigating back to an empty state
+                popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                launchSingleTop = true // Prevent multiple copies of the same destination
+            }
         }
     }
 
@@ -101,14 +83,13 @@ fun AppNavigation(reminderIdFromIntent: Int, destinationFromIntent: String?) {
             MainAppScreen(navController)
         }
 
-        composable("reminders/{reminderId}") { backStackEntry ->
-            val reminderId = backStackEntry.arguments?.getString("reminderId")?.toIntOrNull()
-            val context = LocalContext.current.applicationContext as BusinessCardScannerApp
-            val followUpViewModel: FollowUpViewModel = viewModel(
-                factory = context.followUpViewModelFactory
-            )
-            reminderId?.let { id ->
-                FollowUpReminderScreen(viewModel = followUpViewModel, reminderId = id)
+        // Add the details route here if it's not already defined in BusinessCardApp's NavHost
+        // (It is, but this ensures it's accessible from the root NavHost if needed)
+        composable("details/{cardId}") { backStackEntry ->
+            val cardId = backStackEntry.arguments?.getString("cardId")?.toIntOrNull()
+            if (cardId != null) {
+                val viewModel: BusinessCardViewModel = viewModel()
+                DetailsScreen(cardId = cardId, navController = navController, viewModel = viewModel)
             }
         }
     }

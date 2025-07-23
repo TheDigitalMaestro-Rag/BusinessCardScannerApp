@@ -190,7 +190,7 @@ dependencies {
 
     implementation(libs.play.services.ads)
 
-
+    implementation("com.google.zxing:core:3.5.1")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
 }

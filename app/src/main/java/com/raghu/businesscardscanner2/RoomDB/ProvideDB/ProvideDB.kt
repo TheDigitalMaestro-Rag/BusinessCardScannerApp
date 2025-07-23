@@ -1,13 +1,17 @@
+// FileName: MultipleFiles/ProvideDB.kt
 package com.raghu.businesscardscanner2.RoomDB.ProvideDB
 
 import androidx.compose.ui.platform.LocalContext
 import androidx.room.Room
+import com.raghu.businesscardscanner2.LeadScoreDB.LeadScorer
 import com.raghu.businesscardscanner2.RoomDB.DAO.BusinessCardDao
 import com.raghu.businesscardscanner2.RoomDB.DataBase.AppDatabase
 import com.raghu.businesscardscanner2.RoomDB.Entity.BusinessCard
 import com.raghu.businesscardscanner2.RoomDB.Entity.CardFolderCrossRef
 import com.raghu.businesscardscanner2.RoomDB.Entity.Folder
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 
 class BusinessCardRepository(private val businessCardDao: BusinessCardDao) {
@@ -90,4 +94,38 @@ class BusinessCardRepository(private val businessCardDao: BusinessCardDao) {
         getCardById(cardId)?.let { delete(it) }
     }
 
+    // New methods for reminders
+    fun getCardsWithReminders(currentTime: Long): Flow<List<BusinessCard>> {
+        return businessCardDao.getCardsWithReminders(currentTime)
+    }
+
+    suspend fun clearReminder(cardId: Int) {
+        businessCardDao.clearReminder(cardId)
+    }
+
+    suspend fun scoreAndUpdateLead(card: BusinessCard): BusinessCard {
+        val scoredCard = LeadScorer.scoreLead(card)
+        businessCardDao.update(scoredCard)
+        return scoredCard
+    }
+
+    suspend fun scoreAndUpdateAllLeads() {
+        val cards = businessCardDao.getAllCards().first() // Get first emission
+        cards.forEach { card ->
+            val scoredCard = LeadScorer.scoreLead(card)
+            businessCardDao.update(scoredCard)
+        }
+    }
+
+    fun getCardsByLeadCategory(category: String): Flow<List<BusinessCard>> {
+        return businessCardDao.getAllCards().map { cards ->
+            cards.filter { it.leadCategory == category }
+        }
+    }
+
+    fun getCardsSortedByLeadScore(): Flow<List<BusinessCard>> {
+        return businessCardDao.getAllCards().map { cards ->
+            cards.sortedByDescending { it.leadScore }
+        }
+    }
 }

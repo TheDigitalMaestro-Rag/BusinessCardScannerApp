@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 10,
-    "identityHash": "e6d98353cb35e87a02b211f81dcd57fa",
+    "version": 13,
+    "identityHash": "6405b2d3906e6c66a0c19877898b9f10",
     "entities": [
       {
         "tableName": "business_cards",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `company` TEXT NOT NULL, `position` TEXT NOT NULL, `phones` TEXT NOT NULL, `email` TEXT NOT NULL, `address` TEXT NOT NULL, `website` TEXT NOT NULL, `notes` TEXT NOT NULL, `imagePath` TEXT, `createdAt` INTEGER NOT NULL, `isFavorite` INTEGER NOT NULL, `lastFollowUpDate` INTEGER, `lastViewedAt` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `company` TEXT NOT NULL, `position` TEXT NOT NULL, `phones` TEXT NOT NULL, `email` TEXT NOT NULL, `address` TEXT NOT NULL, `website` TEXT NOT NULL, `notes` TEXT NOT NULL, `imagePath` TEXT, `createdAt` INTEGER NOT NULL, `isFavorite` INTEGER NOT NULL, `lastFollowUpDate` INTEGER, `lastViewedAt` INTEGER NOT NULL, `reminderTime` INTEGER, `reminderMessage` TEXT, `leadScore` INTEGER NOT NULL, `leadCategory` TEXT NOT NULL, `industry` TEXT NOT NULL, `lastContactDate` INTEGER)",
         "fields": [
           {
             "fieldPath": "id",
@@ -89,6 +89,39 @@
             "columnName": "lastViewedAt",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "reminderTime",
+            "columnName": "reminderTime",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "reminderMessage",
+            "columnName": "reminderMessage",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "leadScore",
+            "columnName": "leadScore",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "leadCategory",
+            "columnName": "leadCategory",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "industry",
+            "columnName": "industry",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastContactDate",
+            "columnName": "lastContactDate",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -200,7 +233,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e6d98353cb35e87a02b211f81dcd57fa')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6405b2d3906e6c66a0c19877898b9f10')"
     ]
   }
 }

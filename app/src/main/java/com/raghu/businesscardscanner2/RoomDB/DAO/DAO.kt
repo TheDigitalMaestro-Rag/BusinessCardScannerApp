@@ -1,3 +1,4 @@
+// FileName: MultipleFiles/DAO.kt
 package com.raghu.businesscardscanner2.RoomDB.DAO
 
 import android.content.Context
@@ -71,10 +72,10 @@ interface BusinessCardDao {
 
     @RewriteQueriesToDropUnusedColumns
     @Query("""
-        SELECT business_cards.* 
-        FROM business_cards 
-        INNER JOIN cardfoldercrossref 
-        ON business_cards.id = cardfoldercrossref.cardId 
+        SELECT business_cards.*
+        FROM business_cards
+        INNER JOIN cardfoldercrossref
+        ON business_cards.id = cardfoldercrossref.cardId
         WHERE cardfoldercrossref.folderId = :folderId
         ORDER BY business_cards.name ASC
     """)
@@ -101,5 +102,21 @@ interface BusinessCardDao {
 
     @Delete
     suspend fun deleteFolder(folder: Folder)
-}
 
+    // New query to get cards with active reminders
+    @Query("SELECT * FROM business_cards WHERE reminderTime IS NOT NULL AND reminderTime > :currentTime ORDER BY reminderTime ASC")
+    fun getCardsWithReminders(currentTime: Long): Flow<List<BusinessCard>>
+
+    // New query to clear a reminder
+    @Query("UPDATE business_cards SET reminderTime = NULL, reminderMessage = NULL WHERE id = :cardId")
+    suspend fun clearReminder(cardId: Int)
+
+    @Query("UPDATE business_cards SET leadScore = :score, leadCategory = :category WHERE id = :cardId")
+    suspend fun updateLeadScore(cardId: Int, score: Int, category: String)
+
+    @Query("SELECT * FROM business_cards ORDER BY leadScore DESC")
+    fun getAllCardsByLeadScore(): Flow<List<BusinessCard>>
+
+    @Query("SELECT * FROM business_cards WHERE leadCategory = :category ORDER BY leadScore DESC")
+    fun getCardsByLeadCategory(category: String): Flow<List<BusinessCard>>
+}

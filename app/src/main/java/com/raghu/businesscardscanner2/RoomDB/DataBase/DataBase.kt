@@ -1,15 +1,11 @@
+// FileName: MultipleFiles/DataBase.kt
 package com.raghu.businesscardscanner2.RoomDB.DataBase
 
 import android.content.Context
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
+import androidx.room.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.raghu.businesscardscanner2.Converters.Converters
-import com.raghu.businesscardscanner2.FollowUpRemaiders.FollowUpReminderDao
-import com.raghu.businesscardscanner2.FollowUpRemaiders.FollowUpReminderEntity
 import com.raghu.businesscardscanner2.RoomDB.DAO.BusinessCardDao
 import com.raghu.businesscardscanner2.RoomDB.Entity.BusinessCard
 import com.raghu.businesscardscanner2.RoomDB.Entity.CardFolderCrossRef
@@ -20,15 +16,13 @@ import com.raghu.businesscardscanner2.RoomDB.Entity.Folder
         BusinessCard::class,
         Folder::class,
         CardFolderCrossRef::class,
-        FollowUpReminderEntity::class
     ],
-    version = 10,
+    version = 13, // Increment this version number
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun businessCardDao(): BusinessCardDao
-    abstract fun followUpReminderDao(): FollowUpReminderDao
 
     companion object {
         @Volatile
@@ -56,75 +50,39 @@ abstract class AppDatabase : RoomDatabase() {
 
                 database.execSQL("CREATE INDEX IF NOT EXISTS index_cardfoldercrossref_cardId ON cardfoldercrossref(cardId)")
                 database.execSQL("CREATE INDEX IF NOT EXISTS index_cardfoldercrossref_folderId ON cardfoldercrossref(folderId)")
-                database.execSQL("ALTER TABLE BusinessCard ADD COLUMN phones TEXT")
             }
         }
 
-        val MIGRATION_2_3 = object : Migration(2, 3) {
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("""
-                    ALTER TABLE business_cards 
+                    ALTER TABLE business_cards
                     ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0
                 """.trimIndent())
             }
         }
 
-        // In AppDatabase.kt
-        private val MIGRATION_3_4 = object : Migration(3, 4) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("""
-            CREATE TABLE IF NOT EXISTS follow_up_reminders (
-                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                contactId INTEGER NOT NULL,
-                contactName TEXT NOT NULL,
-                message TEXT NOT NULL,
-                dueDate INTEGER NOT NULL,
-                isCompleted INTEGER NOT NULL DEFAULT 0
-            )
-        """.trimIndent())
-
-                // Add lastFollowUpDate column if missing
-                try {
-                    database.execSQL("ALTER TABLE business_cards ADD COLUMN lastFollowUpDate INTEGER")
-                } catch (e: Exception) {
-                    // Column already exists
-                }
-            }
-        }
-
-        private val MIGRATION_4_5 = object : Migration(4, 5) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Add new columns to follow_up_reminders
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN repeatType TEXT NOT NULL DEFAULT 'None'")
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN category TEXT NOT NULL DEFAULT 'General'")
-            }
-        }
-
-        private val MIGRATION_5_6 = object : Migration(5, 6) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN snoozeCount INTEGER NOT NULL DEFAULT 0")
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN phoneNumber TEXT")
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN email TEXT")
-            }
-        }
-
-        private val MIGRATION_7_8 = object : Migration(7, 8) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN companyName TEXT;")
-            }
-        }
-
-        private val MIGRATION_8_9 = object : Migration(8, 9) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN notes TEXT;")
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN tags TEXT;")
-                database.execSQL("ALTER TABLE follow_up_reminders ADD COLUMN notificationSoundUri TEXT;")
-            }
-        }
-
-        private val MIGRATION_9_10 = object : Migration(9, 10) {
+        private val MIGRATION_3_4 = object : Migration(9, 10) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE business_cards ADD COLUMN lastViewedAt INTEGER NOT NULL DEFAULT ${System.currentTimeMillis()}")
+            }
+        }
+
+        // New migration for reminderTime and reminderMessage
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE business_cards ADD COLUMN reminderTime INTEGER")
+                database.execSQL("ALTER TABLE business_cards ADD COLUMN reminderMessage TEXT")
+            }
+        }
+
+        // In DataBase.kt, add a new migration
+        private val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE business_cards ADD COLUMN leadScore INTEGER NOT NULL DEFAULT 0")
+                database.execSQL("ALTER TABLE business_cards ADD COLUMN leadCategory TEXT NOT NULL DEFAULT 'Unknown'")
+                database.execSQL("ALTER TABLE business_cards ADD COLUMN industry TEXT NOT NULL DEFAULT 'Unknown'")
+                database.execSQL("ALTER TABLE business_cards ADD COLUMN lastContactDate INTEGER")
             }
         }
 
@@ -139,12 +97,9 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_1_2,
                         MIGRATION_2_3,
                         MIGRATION_3_4,
-                        MIGRATION_4_5,
-                        MIGRATION_5_6,
-                        MIGRATION_7_8,
-                        MIGRATION_8_9,
-                        MIGRATION_9_10)
-                    .fallbackToDestructiveMigration()
+                        MIGRATION_11_12, // Add the new migration here
+                        MIGRATION_12_13
+                    )
                     .build()
                 INSTANCE = instance
                 instance
