@@ -190,6 +190,11 @@ dependencies {
 
     implementation(libs.play.services.ads)
 
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0") // For BarcodeEncoder
+
+    // For vCard generation
+    implementation("com.googlecode.ez-vcard:ez-vcard:0.11.3")
+
     implementation("com.google.zxing:core:3.5.1")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 

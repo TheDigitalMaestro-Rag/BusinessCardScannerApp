@@ -1105,7 +1105,7 @@ fun DetailsScreen(cardId: Int, navController: NavController, viewModel: Business
                                     maybeShowAd(it)
                                 } ?: Log.e("AdHelper", "Activity is null, cannot show ad.")
 //                                card?.let { shareBusinessCard(context, it) }
-                                showShareDialog = true
+                                showShareDialog=true
                             }) {
                                 Icon(Icons.Default.Share, contentDescription = "Share")
                             }
@@ -1260,10 +1260,12 @@ fun DetailsScreen(cardId: Int, navController: NavController, viewModel: Business
             )
         }
 
-        if (showShareDialog) {
+        if (showShareDialog==true){
             ShareBusinessCardDialog(
                 card = card!!,
-                onDismiss = { showShareDialog = false }
+                onDismiss = {
+                    showShareDialog = false
+                }
             )
         }
 
@@ -1726,6 +1728,44 @@ fun loadImageFromStorage(context: Context, imagePath: String): Bitmap? {
         e.printStackTrace()
         null
     }
+}
+
+
+fun shareBusinessCard(context: Context, card: BusinessCard) {
+    val shareText = buildString {
+        append("Business Card Details\n\n")
+        append("Name: ${card.name}\n")
+        card.position?.let { append("Position: $it\n") }
+        card.company?.let { append("Company: $it\n") }
+        card.phones?.let { append("Phone: $it\n") }
+        card.email?.let { append("Email: $it\n") }
+        card.website?.let { append("Website: $it\n") }
+        card.address?.let { append("Address: $it\n") }
+        card.notes?.let { append("Notes: $it\n") }
+    }
+
+    val shareIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, shareText)
+        type = "text/plain"
+
+        // Share image if available
+        card.imagePath?.let { imagePath ->
+            val imageFile = File(imagePath)
+            if (imageFile.exists()) {
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    imageFile
+                )
+                putExtra(Intent.EXTRA_STREAM, uri)
+                type = "image/*"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        }
+    }
+
+    context.startActivity(Intent.createChooser(shareIntent, "Share Business Card"))
 }
 
 // Export to CSV function

@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.FileProvider
@@ -19,99 +20,223 @@ import com.google.zxing.common.BitMatrix
 import com.raghu.businesscardscanner2.RoomDB.Entity.BusinessCard
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.OutputStream
-
-// Add to your dependencies:
-// implementation 'com.google.zxing:core:3.5.1'
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 object BusinessCardSharer {
 
-    // Enhanced sharing function with multiple options
+    // Main share function with all options
     fun shareBusinessCard(
         context: Context,
         card: BusinessCard,
+        shareType: ShareType = ShareType.TEXT,
         includeImage: Boolean = true,
         includeQRCode: Boolean = true,
         includeVCard: Boolean = true
     ) {
-        val shareIntents = mutableListOf<Intent>()
-        val shareText = buildShareText(card)
-
-        // Create base text sharing intent
-        val textIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, shareText)
-            type = "text/plain"
+        when (shareType) {
+            ShareType.TEXT -> shareAsText(context, card)
+            ShareType.IMAGE -> shareAsImage(context, card)
+            ShareType.VCARD -> shareAsVCard(context, card)
+            ShareType.QR_CODE -> shareAsQRCode(context, card)
+            ShareType.WHATSAPP -> shareViaWhatsApp(context, card)
+            ShareType.TELEGRAM -> shareViaTelegram(context, card)
+            ShareType.ALL -> shareAllFormats(context, card, includeImage, includeQRCode, includeVCard)
         }
-        shareIntents.add(textIntent)
-
-        // Add image sharing if available and requested
-        if (includeImage && card.imagePath != null) {
-            val imageUri = getImageUri(context, card.imagePath)
-            imageUri?.let { uri ->
-                val imageIntent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    type = "image/*"
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                shareIntents.add(imageIntent)
-            }
-        }
-
-        // Add QR code sharing if requested
-        if (includeQRCode) {
-            val qrBitmap = generateQRCode(shareText, 400, 400)
-            qrBitmap?.let { bitmap ->
-                val qrUri = saveBitmapAndGetUri(context, bitmap, "business_card_qr.png")
-                qrUri?.let { uri ->
-                    val qrIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        type = "image/png"
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    shareIntents.add(qrIntent)
-                }
-            }
-        }
-
-        // Add vCard sharing if requested (iPhone-like contact sharing)
-        if (includeVCard) {
-            val vCardText = generateVCard(card)
-            val vCardUri = saveTextAndGetUri(context, vCardText, "contact.vcf")
-            vCardUri?.let { uri ->
-                val vCardIntent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    type = "text/x-vcard"
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                shareIntents.add(vCardIntent)
-            }
-        }
-
-        // Create chooser with all options
-        val chooserIntent = Intent.createChooser(shareIntents.first(), "Share Business Card")
-        chooserIntent.putExtra(
-            Intent.EXTRA_INITIAL_INTENTS,
-            shareIntents.drop(1).toTypedArray()
-        )
-        context.startActivity(chooserIntent)
     }
 
-     fun buildShareText(card: BusinessCard): String {
+    // Share as plain text
+    private fun shareAsText(context: Context, card: BusinessCard) {
+        val shareText = buildShareText(card)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, shareText)
+        }
+        context.startActivity(Intent.createChooser(intent, "Share Business Card as Text"))
+    }
+
+    // Share as image (with text overlay if no image available)
+    private fun shareAsImage(context: Context, card: BusinessCard) {
+        card.imagePath?.let { path ->
+            val imageFile = File(path)
+            if (imageFile.exists()) {
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.provider",
+                    imageFile
+                )
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/*"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(intent, "Share Business Card Image"))
+                return
+            }
+        }
+        // If no image available, share text instead
+        shareAsText(context, card)
+    }
+
+    // Share as vCard (iPhone-like contact sharing)
+    private fun shareAsVCard(context: Context, card: BusinessCard) {
+        val vCardText = generateVCard(card)
+        val file = File(context.cacheDir, "${card.name}.vcf")
+        file.writeText(vCardText)
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            file
+        )
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/x-vcard"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        context.startActivity(Intent.createChooser(intent, "Share as Contact"))
+    }
+
+    // Share as QR code
+    private fun shareAsQRCode(context: Context, card: BusinessCard) {
+        val qrBitmap = generateQRCode(buildShareText(card), 500, 500) ?: return
+        val file = File(context.cacheDir, "${card.name}_qr.png")
+        FileOutputStream(file).use { out ->
+            qrBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",  // This must match the authority in AndroidManifest.xml
+            file
+        )
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/png"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        context.startActivity(Intent.createChooser(intent, "Share QR Code"))
+    }
+
+    // Share via WhatsApp
+    private fun shareViaWhatsApp(context: Context, card: BusinessCard) {
+        val text = buildShareText(card)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            `package` = "com.whatsapp"
+        }
+        try {
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "WhatsApp not installed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Share via Telegram
+    private fun shareViaTelegram(context: Context, card: BusinessCard) {
+        val text = buildShareText(card)
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            `package` = "org.telegram.messenger"
+        }
+        try {
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Telegram not installed", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Share all formats in a zip file
+    private fun shareAllFormats(
+        context: Context,
+        card: BusinessCard,
+        includeImage: Boolean,
+        includeQRCode: Boolean,
+        includeVCard: Boolean
+    ) {
+        val cacheDir = File(context.cacheDir, "shared_card")
+        if (!cacheDir.exists()) cacheDir.mkdirs()
+
+        val files = mutableListOf<File>()
+
+        // Save text file
+        val text = buildShareText(card)
+        val textFile = File(cacheDir, "card.txt").apply {
+            writeText(text)
+        }
+        files.add(textFile)
+
+        // Save image if enabled
+        if (includeImage && card.imagePath != null) {
+            val imageFile = File(card.imagePath)
+            if (imageFile.exists()) {
+                val copiedImage = File(cacheDir, "card_image.jpg")
+                imageFile.copyTo(copiedImage, overwrite = true)
+                files.add(copiedImage)
+            }
+        }
+
+        // Save QR code if enabled
+        if (includeQRCode) {
+            val qrBitmap = generateQRCode(text, 400, 400)
+            qrBitmap?.let {
+                val qrFile = File(cacheDir, "card_qr.png")
+                FileOutputStream(qrFile).use { out ->
+                    it.compress(Bitmap.CompressFormat.PNG, 100, out)
+                }
+                files.add(qrFile)
+            }
+        }
+
+        // Save vCard if enabled
+        if (includeVCard) {
+            val vCardText = generateVCard(card)
+            val vcfFile = File(cacheDir, "contact.vcf").apply {
+                writeText(vCardText)
+            }
+            files.add(vcfFile)
+        }
+
+        // Zip all files
+        val zipFile = File(context.cacheDir, "BusinessCard_${card.name}.zip")
+        zipFiles(files, zipFile)
+
+        // Share zip
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            zipFile
+        )
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/zip"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        context.startActivity(Intent.createChooser(intent, "Share Business Card"))
+    }
+
+    fun buildShareText(card: BusinessCard): String {
         return buildString {
             append("Business Card Details\n\n")
             append("Name: ${card.name}\n")
-            if (card.position.isNotBlank()) append("Position: ${card.position}\n")
-            if (card.company.isNotBlank()) append("Company: ${card.company}\n")
+            if (!card.position.isNullOrBlank()) append("Position: ${card.position}\n")
+            if (!card.company.isNullOrBlank()) append("Company: ${card.company}\n")
             if (card.phones.isNotEmpty()) append("Phone: ${card.phones.joinToString(", ")}\n")
-            if (card.email.isNotBlank()) append("Email: ${card.email}\n")
-            if (card.website.isNotBlank()) append("Website: ${card.website}\n")
-            if (card.address.isNotBlank()) append("Address: ${card.address}\n")
-            if (card.notes.isNotBlank()) append("Notes: ${card.notes}\n")
+            if (!card.email.isNullOrBlank()) append("Email: ${card.email}\n")
+            if (!card.website.isNullOrBlank()) append("Website: ${card.website}\n")
+            if (!card.address.isNullOrBlank()) append("Address: ${card.address}\n")
+            if (!card.notes.isNullOrBlank()) append("Notes: ${card.notes}\n")
         }
     }
 
@@ -120,32 +245,19 @@ object BusinessCardSharer {
             append("BEGIN:VCARD\n")
             append("VERSION:3.0\n")
             append("FN:${card.name}\n")
-            if (card.position.isNotBlank()) append("TITLE:${card.position}\n")
-            if (card.company.isNotBlank()) append("ORG:${card.company}\n")
+            if (!card.position.isNullOrBlank()) append("TITLE:${card.position}\n")
+            if (!card.company.isNullOrBlank()) append("ORG:${card.company}\n")
             card.phones.forEach { phone ->
                 append("TEL;TYPE=WORK,VOICE:$phone\n")
             }
-            if (card.email.isNotBlank()) append("EMAIL;TYPE=WORK:${card.email}\n")
-            if (card.website.isNotBlank()) append("URL:${card.website}\n")
-            if (card.address.isNotBlank()) append("ADR;TYPE=WORK:;;${card.address}\n")
+            if (!card.email.isNullOrBlank()) append("EMAIL;TYPE=WORK:${card.email}\n")
+            if (!card.website.isNullOrBlank()) append("URL:${card.website}\n")
+            if (!card.address.isNullOrBlank()) append("ADR;TYPE=WORK:;;${card.address}\n")
             append("END:VCARD\n")
         }
     }
 
-    private fun getImageUri(context: Context, imagePath: String): Uri? {
-        val imageFile = File(imagePath)
-        return if (imageFile.exists()) {
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                imageFile
-            )
-        } else {
-            null
-        }
-    }
-
-    private fun generateQRCode(content: String, width: Int, height: Int): Bitmap? {
+    fun generateQRCode(content: String, width: Int, height: Int): Bitmap? {
         return try {
             val bitMatrix: BitMatrix = MultiFormatWriter().encode(
                 content,
@@ -168,134 +280,25 @@ object BusinessCardSharer {
         }
     }
 
-    private fun saveBitmapAndGetUri(context: Context, bitmap: Bitmap, fileName: String): Uri? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // For Android 10+ use MediaStore
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
-            }
-
-            val resolver: ContentResolver = context.contentResolver
-            var uri: Uri? = null
-            try {
-                uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-                uri?.let {
-                    resolver.openOutputStream(it)?.use { outputStream ->
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-                    }
-                }
-                uri
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        } else {
-            // For older versions use file system
-            val imagesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-            val imageFile = File(imagesDir, fileName)
-            try {
-                FileOutputStream(imageFile).use { out ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-                }
-                FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    imageFile
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        }
-    }
-
-    private fun saveTextAndGetUri(context: Context, text: String, fileName: String): Uri? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // For Android 10+ use MediaStore
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-                put(MediaStore.MediaColumns.MIME_TYPE, "text/x-vcard")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS)
-            }
-
-            val resolver: ContentResolver = context.contentResolver
-            var uri: Uri? = null
-            try {
-                uri = resolver.insert(MediaStore.Files.getContentUri("external"), contentValues)
-                uri?.let {
-                    resolver.openOutputStream(it)?.use { outputStream ->
-                        outputStream.write(text.toByteArray())
-                    }
-                }
-                uri
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        } else {
-            // For older versions use file system
-            val filesDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
-            val textFile = File(filesDir, fileName)
-            try {
-                FileOutputStream(textFile).use { out ->
-                    out.write(text.toByteArray())
-                }
-                FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    textFile
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        }
-    }
-
     // Function to generate QR code as ImageBitmap for preview in UI
     fun generateQRCodeImageBitmap(content: String, size: Int): ImageBitmap? {
         val bitmap = generateQRCode(content, size, size)
         return bitmap?.asImageBitmap()
     }
-}
 
-
-// Share business card function
-fun shareBusinessCard(context: Context, card: BusinessCard) {
-    val shareText = buildString {
-        append("Business Card Details\n\n")
-        append("Name: ${card.name}\n")
-        card.position?.let { append("Position: $it\n") }
-        card.company?.let { append("Company: $it\n") }
-        card.phones?.let { append("Phone: $it\n") }
-        card.email?.let { append("Email: $it\n") }
-        card.website?.let { append("Website: $it\n") }
-        card.address?.let { append("Address: $it\n") }
-        card.notes?.let { append("Notes: $it\n") }
-    }
-
-    val shareIntent = Intent().apply {
-        action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, shareText)
-        type = "text/plain"
-
-        // Share image if available
-        card.imagePath?.let { imagePath ->
-            val imageFile = File(imagePath)
-            if (imageFile.exists()) {
-                val uri = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    imageFile
-                )
-                putExtra(Intent.EXTRA_STREAM, uri)
-                type = "image/*"
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    private fun zipFiles(files: List<File>, outputZip: File) {
+        ZipOutputStream(FileOutputStream(outputZip)).use { zipOut ->
+            files.forEach { file ->
+                FileInputStream(file).use { input ->
+                    val entry = ZipEntry(file.name)
+                    zipOut.putNextEntry(entry)
+                    input.copyTo(zipOut)
+                }
             }
         }
     }
+}
 
-    context.startActivity(Intent.createChooser(shareIntent, "Share Business Card"))
+enum class ShareType {
+    TEXT, IMAGE, VCARD, QR_CODE, WHATSAPP, TELEGRAM, ALL
 }
