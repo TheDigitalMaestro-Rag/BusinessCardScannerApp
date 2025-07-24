@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,187 +30,141 @@ fun ShareBusinessCardDialog(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var includeImage by remember { mutableStateOf(true) }
-    var includeQRCode by remember { mutableStateOf(true) }
-    var includeVCard by remember { mutableStateOf(true) }
     val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.share_business_card)) },
+        title = { Text("Share Business Card") },
         text = {
             Column(
                 modifier = modifier
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // QR Code Preview
-                if (includeQRCode) {
-                    val qrBitmap = remember(card) {
-                        BusinessCardSharer.generateQRCodeImageBitmap(
-                            BusinessCardSharer.buildShareText(card),
-                            200
+                // Option 1: Image + Content
+                Card(
+                    onClick = {
+                        BusinessCardSharer.shareBusinessCard(context, card)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = "Image",
+                            modifier = Modifier.size(24.dp)
                         )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "Image + Content",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = "Share as text with image attachment",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
                     }
+                }
 
-                    qrBitmap?.let {
-                        Image(
-                            bitmap = it,
+                // Option 2: vCard Contact File
+                Card(
+                    onClick = {
+                        BusinessCardSharer.shareBusinessCard(
+                            context,
+                            card,
+                            ShareType.VCARD
+                        )
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Contacts,
+                            contentDescription = "Contact",
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "Contact File (.vcf)",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = "Share as iPhone/Android contact",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+
+                // Option 3: QR Code
+                Card(
+                    onClick = {
+                        BusinessCardSharer.shareBusinessCard(
+                            context,
+                            card,
+                            ShareType.QR_CODE
+                        )
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.QrCode,
                             contentDescription = "QR Code",
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .padding(bottom = 16.dp)
-                                .size(200.dp)
+                            modifier = Modifier.size(24.dp)
                         )
-                    }
-                }
-
-                // Sharing options
-                Text("Sharing Options:", style = MaterialTheme.typography.labelLarge)
-
-                // Quick share buttons
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    IconButton(
-                        onClick = {
-                            BusinessCardSharer.shareBusinessCard(
-                                context,
-                                card,
-                                ShareType.VCARD
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "QR Code",
+                                style = MaterialTheme.typography.bodyLarge
                             )
-                        }
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Filled.Contacts,
-                                contentDescription = "Share as Contact",
-                                modifier = Modifier.size(48.dp)
+                            Text(
+                                text = "Share as scannable QR code image",
+                                style = MaterialTheme.typography.bodySmall
                             )
-                            Text("Contact", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-
-                    IconButton(
-                        onClick = {
-                            BusinessCardSharer.shareBusinessCard(
-                                context,
-                                card,
-                                ShareType.WHATSAPP
-                            )
-                        }
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Filled.Chat,
-                                contentDescription = "Share via WhatsApp",
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Text("WhatsApp", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-
-                    IconButton(
-                        onClick = {
-                            BusinessCardSharer.shareBusinessCard(
-                                context,
-                                card,
-                                ShareType.TELEGRAM
-                            )
-                        }
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Filled.Send,
-                                contentDescription = "Share via Telegram",
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Text("Telegram", style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-
-                    IconButton(
-                        onClick = {
-                            BusinessCardSharer.shareBusinessCard(
-                                context,
-                                card,
-                                ShareType.QR_CODE
-                            )
-                        }
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Filled.QrCode,
-                                contentDescription = "Share QR Code",
-                                modifier = Modifier.size(48.dp)
-                            )
-                            Text("QR Code", style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
 
-                // Advanced options
-                Text("Advanced Options:", style = MaterialTheme.typography.labelLarge)
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Checkbox(
-                        checked = includeImage,
-                        onCheckedChange = { includeImage = it },
-                        modifier = Modifier.padding(end = 8.dp)
+                // QR Code Preview (only shown if QR code option is visible)
+                BusinessCardSharer.generateQRCodeImageBitmap(
+                    BusinessCardSharer.buildShareText(card),
+                    200
+                )?.let { qrBitmap ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "QR Code Preview:",
+                        style = MaterialTheme.typography.labelMedium
                     )
-                    Text("Include Image", style = MaterialTheme.typography.bodyLarge)
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Checkbox(
-                        checked = includeQRCode,
-                        onCheckedChange = { includeQRCode = it },
-                        modifier = Modifier.padding(end = 8.dp)
+                    Image(
+                        bitmap = qrBitmap,
+                        contentDescription = "QR Code Preview",
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .size(200.dp)
                     )
-                    Text("Include QR Code", style = MaterialTheme.typography.bodyLarge)
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Checkbox(
-                        checked = includeVCard,
-                        onCheckedChange = { includeVCard = it },
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                    Text("Include Contact (vCard)", style = MaterialTheme.typography.bodyLarge)
                 }
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    BusinessCardSharer.shareBusinessCard(
-                        context = context,
-                        card = card,
-                        shareType = ShareType.ALL,
-                        includeImage = includeImage,
-                        includeQRCode = includeQRCode,
-                        includeVCard = includeVCard
-                    )
-                    onDismiss()
-                }
-            ) {
-                Text("Share All")
-            }
-        },
-        dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Close")
             }
         }
     )
