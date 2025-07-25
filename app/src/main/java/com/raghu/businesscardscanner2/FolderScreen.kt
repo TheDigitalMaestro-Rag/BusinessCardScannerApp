@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
@@ -90,8 +91,8 @@ fun FoldersScreen(navController: NavController, viewModel: BusinessCardViewModel
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color.Black,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 title = { Text("Folders") },
                 actions = {
@@ -172,6 +173,7 @@ fun FoldersScreen(navController: NavController, viewModel: BusinessCardViewModel
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
+                .background(color = MaterialTheme.colorScheme.background)
                 .padding(padding),
             contentPadding = PaddingValues(16.dp)
         ) {
@@ -227,7 +229,7 @@ fun FolderItem(
 //                else -> MaterialTheme.colorScheme.surface
 
                 isSelected -> MaterialTheme.colorScheme.secondaryContainer
-                else -> Color.White
+                else -> MaterialTheme.colorScheme.surface
             }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 8.dp else 3.5.dp)
@@ -322,8 +324,8 @@ fun FolderDetailsScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color.Black,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 title = { Text(folder?.name ?: "Folder") },
                 navigationIcon = {
@@ -418,6 +420,7 @@ fun FolderDetailsScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background)
                     .padding(padding),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(16.dp)

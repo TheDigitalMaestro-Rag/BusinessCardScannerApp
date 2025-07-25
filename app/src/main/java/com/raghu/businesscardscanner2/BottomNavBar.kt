@@ -52,7 +52,7 @@ fun AnimatedBottomBar(
         contentAlignment = Alignment.BottomCenter
     ) {
         Surface(
-            color = Color.White,
+            color = MaterialTheme.colorScheme.background,
             modifier = Modifier
                 .fillMaxWidth() // full width without padding
                 .height(64.dp)

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,7 +44,7 @@ fun CardListWithSearchScreen(
     }
 
     Column(
-        modifier = Modifier.background(color = Color.White)
+        modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
     ){
         RoundedSearchBar(
             query = searchQuery,
@@ -58,7 +59,7 @@ fun CardListWithSearchScreen(
         } else {
             LazyColumn(
                 modifier = Modifier
-                    .background(Color.White)
+                    .background(MaterialTheme.colorScheme.background)
                     .fillMaxSize()
                     .padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)

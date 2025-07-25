@@ -14,12 +14,15 @@ import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
 import com.raghu.businesscardscanner2.NavItem
 import com.raghu.businesscardscanner.R
-
+import androidx.compose.foundation.isSystemInDarkTheme
 
 @Composable
-fun DrawerHeader() {
-
+fun DrawerHeader(setUseDarkTheme: (Boolean) -> Unit) { // Add parameter
     val userInfo = remember { getCurrentUserInfo() }
+    val isDarkTheme = isSystemInDarkTheme() // Get current system theme status
+
+    // State to hold the toggle switch's checked status
+    var checked by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -49,8 +52,25 @@ fun DrawerHeader() {
             text = userInfo?.email ?: "No Email",
             style = MaterialTheme.typography.bodySmall
         )
+        Spacer(modifier = Modifier.height(12.dp)) // Add some space
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Dark Mode", style = MaterialTheme.typography.bodyLarge)
+            Switch(
+                checked = checked,
+                onCheckedChange = {
+                    checked = it
+                    setUseDarkTheme(it) // Update the theme state
+                }
+            )
+        }
     }
 }
+
 
 @Composable
 fun DrawerBody(

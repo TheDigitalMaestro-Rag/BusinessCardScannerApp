@@ -147,7 +147,8 @@ import com.raghu.businesscardscanner2.ReminderBroadcastReceiver
 fun BusinessCardApp(
     navController: NavController,
     viewModel: BusinessCardViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    setUseDarkTheme: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as BusinessCardScannerApp
@@ -185,8 +186,8 @@ fun BusinessCardApp(
                 if (bottomBarRoutes.contains(currentRoute)) {
                     CenterAlignedTopAppBar(
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                            containerColor = Color.White,
-                            titleContentColor = Color.Black,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface
                         ),
                         title = { Text(stringResource(R.string.app_name)) },
                         navigationIcon = {
@@ -277,7 +278,7 @@ fun BusinessCardApp(
             drawerState = drawerState,
             drawerContent = {
                 ModalDrawerSheet {
-                    DrawerHeader()
+                    DrawerHeader(setUseDarkTheme = setUseDarkTheme)
                     DrawerBody(
                         navItems = navItems,
                         currentRoute = currentRoute,
@@ -383,7 +384,7 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.background,
                 ),
                 title = {
                     SortFilterBar(
@@ -496,7 +497,7 @@ fun HomeScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.background(color = Color.White)
+                modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
                     .fillMaxSize()
                     .padding(padding),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -559,7 +560,7 @@ fun RoundedSearchBar(
             .padding(16.dp)
             .height(56.dp)
             .background(
-                color = Color(0xFFF0F0F0),
+                color = MaterialTheme.colorScheme.surfaceVariant,
                 shape = RoundedCornerShape(28.dp)
             ),
         contentAlignment = Alignment.CenterStart
@@ -591,7 +592,7 @@ fun RoundedSearchBar(
                 modifier = Modifier
                     .size(40.dp)
                     .padding(end = 8.dp)
-                    .background(Color(0xFF5B5B79), shape = CircleShape)
+                    .background(MaterialTheme.colorScheme.primary, shape = CircleShape)
             ) {
                 Icon(
                     imageVector = Icons.Default.Search,
@@ -634,14 +635,14 @@ fun BusinessCardItem(
                 onLongClick = onLongClick
             )
             .background(
-                if (isSelected)  Color.White
+                if (isSelected)  MaterialTheme.colorScheme.background
                 else MaterialTheme.colorScheme.surface
             ),
 
         colors = CardDefaults.cardColors(
             containerColor = when {
                 isSelected -> MaterialTheme.colorScheme.secondaryContainer
-                else -> Color.White
+                else -> MaterialTheme.colorScheme.background
             }
         ),
         shape = RoundedCornerShape(12.dp),
