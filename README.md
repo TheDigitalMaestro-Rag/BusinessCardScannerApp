@@ -17,7 +17,7 @@ This app allows users to scan, manage, and organize business cards using OCR (ML
 
 ## 📸 Screenshots
 | Main Screen |
-| ![Main](doc/Screenshot_20250909_170648.png) |
+| ![Main](doc/Screenshot 2025-06-14 103002.png) |
 
 ---
 
