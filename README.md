@@ -15,6 +15,12 @@ This app allows users to scan, manage, and organize business cards using OCR (ML
 
 ---
 
+## 📸 Screenshots
+| Main Screen |
+| ![Main](doc/Screenshot_20250909_170648.png) |
+
+---
+
 ## 📱 Tech Stack
 
 * **Jetpack Compose** - UI
