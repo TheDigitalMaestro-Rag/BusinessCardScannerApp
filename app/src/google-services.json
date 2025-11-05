@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "110807256708",
+    "firebase_url": "https://business-card-scanner-ap-92516-default-rtdb.firebaseio.com",
+    "project_id": "business-card-scanner-ap-92516",
+    "storage_bucket": "business-card-scanner-ap-92516.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:110807256708:android:1a9017e51598cd967a7cd1",
+        "android_client_info": {
+          "package_name": "com.project.businesscardscannerapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiUhyRUXyrEI0z4zcaUGy31hqOvAQDm08"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
